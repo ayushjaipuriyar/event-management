@@ -37,7 +37,32 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework.authtoken',
+    'authentication',
+    'events',
+    'users',
 ]
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
+DEFAULT_AUTHENTICATION_CLASSES = [
+    'rest_framework.authtoken.authentication.TokenAuthentication'
+]
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'zenatix',
+        'USER': 'ayush',
+        'PASSWORD': 'mango1998',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
+}
+AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
