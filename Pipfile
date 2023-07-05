@@ -8,6 +8,9 @@ django = "*"
 djangorestframework = "*"
 psycopg2 = "*"
 djangorestframework-simplejwt = "*"
+django-rest-swagger = "*"
+drf-yasg = "*"
+django-filter = "*"
 
 [dev-packages]
 
