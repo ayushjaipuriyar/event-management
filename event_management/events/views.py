@@ -9,6 +9,12 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from users.models import User
 import django_filters.rest_framework as filters
 import jwt
+from rest_framework.pagination import PageNumberPagination
+
+
+class CustomPageNumberPagination(PageNumberPagination):
+    page_size_query_param = 'page_size'
+    max_page_size = 10
 
 
 class AdminPermission(permissions.BasePermission):
@@ -139,6 +145,7 @@ class EventListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
     filterset_class = EventFilter
     filter_backends = [filters.DjangoFilterBackend]
+    pagination_class = CustomPageNumberPagination
 
     def get_queryset(self):
         queryset = Event.objects.filter(
@@ -215,7 +222,6 @@ class RegistrationListView(generics.ListAPIView):
             return Registration.objects.none()
 
         return Registration.objects.filter(event_id=event_pk)
-
 
 
 class RegistrationDetailView(generics.RetrieveUpdateAPIView):

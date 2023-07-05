@@ -10,6 +10,12 @@ import jwt
 from django.conf import settings
 from events.serializers import RegistrationSerializer
 from events.models import Registration
+from rest_framework.pagination import PageNumberPagination
+
+
+class CustomPageNumberPagination(PageNumberPagination):
+    page_size_query_param = 'page_size'
+    max_page_size = 10
 
 
 class ParticipantPermission(permissions.BasePermission):
@@ -144,6 +150,7 @@ class UserAuthenticationView(generics.CreateAPIView):
 class UserRegistrationsView(generics.ListAPIView):
     serializer_class = RegistrationSerializer
     permission_classes = [ParticipantPermission]
+    pagination_class = CustomPageNumberPagination
 
     def get_queryset(self):
         participant = ParticipantPermission()
