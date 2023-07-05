@@ -21,6 +21,4 @@ urlpatterns = [
          name='registration-create'),
     path('<int:event_pk>/registrations/<int:pk>/',
          RegistrationDetailView.as_view(), name='registration-detail'),
-#     path('<int:event_pk>/registrations/<int:pk>/approval/',
-#          RegistrationApprovalView.as_view(), name='registration-approval'),
 ]

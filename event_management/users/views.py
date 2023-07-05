@@ -5,17 +5,66 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User
-from .serializers import UserRegistrationSerializer, UserAuthenticationSerializer
+from .serializers import UserRegistrationSerializer, UserAuthenticationSerializer, UserSerializer
 import jwt
 from django.conf import settings
 from events.serializers import RegistrationSerializer
 from events.models import Registration
 from rest_framework.pagination import PageNumberPagination
+from django.shortcuts import get_object_or_404
 
 
 class CustomPageNumberPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 10
+
+
+class AdminPermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        # Check if the access token is present in the request cookies
+        access_token = request.COOKIES.get('access_token')
+
+        if not access_token:
+            return False
+        try:
+            # Decode the access token and extract the user ID
+            decoded_token = jwt.decode(
+                access_token, settings.SECRET_KEY, algorithms='HS256')
+            user_id = decoded_token.get('user_id')
+        except jwt.ExpiredSignatureError:
+            return False
+
+        # Look up the user based on the user ID from the access token
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return False
+
+        # Check if the user is authenticated and has the 'admin' role
+        return user.role.lower() == 'admin'
+
+    def get_username(self, request, view):
+        # Check if the access token is present in the request cookies
+        access_token = request.COOKIES.get('access_token')
+
+        if not access_token:
+            return False
+        try:
+            # Decode the access token and extract the user ID
+            decoded_token = jwt.decode(
+                access_token, settings.SECRET_KEY, algorithms='HS256')
+            user_id = decoded_token.get('user_id')
+        except jwt.ExpiredSignatureError:
+            return False
+
+        # Look up the user based on the user ID from the access token
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return False
+
+        # Check if the user is authenticated and has the 'admin' role
+        return user.username
 
 
 class ParticipantPermission(permissions.BasePermission):
@@ -156,3 +205,38 @@ class UserRegistrationsView(generics.ListAPIView):
         participant = ParticipantPermission()
         user_id = participant.get_user_id(self.request, self)
         return Registration.objects.filter(user_id=user_id)
+
+
+class AdminUserListView(generics.ListAPIView):
+    queryset = User.objects.filter(role='participant')
+    serializer_class = UserSerializer
+    permission_classes = [AdminPermission]
+    pagination_class = CustomPageNumberPagination
+
+
+class AdminUserDetailView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [AdminPermission]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        permission = AdminPermission()
+        context['is_admin'] = permission.has_permission(self.request, self)
+        return context
+
+    def get_queryset(self):
+        return User.objects.filter(role='participant')
+
+    def get(self, request, *args, **kwargs):
+        user_id = self.kwargs['pk']
+        user = get_object_or_404(self.get_queryset(), id=user_id)
+        permission = AdminPermission()
+
+        serializer = self.get_serializer(user)
+        data = serializer.data
+        registrations = Registration.objects.filter(user_id=user_id)
+        registrations_serializer = RegistrationSerializer(
+            registrations, many=True, context={'is_admin': permission.has_permission(self.request, self)})
+        data['registrations'] = registrations_serializer.data
+
+        return Response(data)
