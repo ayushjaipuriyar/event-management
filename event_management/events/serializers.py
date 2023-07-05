@@ -1,13 +1,16 @@
 from rest_framework import serializers
-from .models import Event, Registration
+from .models import Event, Registration, Category
 from venues.models import Venue
 from django.utils import timezone
 from datetime import datetime
+from django import forms
 
 
 class EventSerializer(serializers.ModelSerializer):
     venue = serializers.SlugRelatedField(
         slug_field='name', queryset=Venue.objects.all())
+    categories = serializers.SlugRelatedField(
+        many=True, slug_field='name', queryset=Category.objects.all())
 
     class Meta:
         model = Event
@@ -52,6 +55,12 @@ class EventSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     "Conflicting events found at the same venue.")
         return attrs
+
+    def create(self, validated_data):
+        categories_data = validated_data.pop('categories')
+        event = Event.objects.create(**validated_data)
+        event.categories.set(categories_data)
+        return event
 
 
 class RegistrationSerializer(serializers.ModelSerializer):

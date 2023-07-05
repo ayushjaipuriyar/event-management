@@ -147,29 +147,6 @@ class EventListView(generics.ListAPIView):
     filter_backends = [filters.DjangoFilterBackend]
     pagination_class = CustomPageNumberPagination
 
-    def get_queryset(self):
-        queryset = Event.objects.filter(
-            start_time__gte=datetime.datetime.now())
-        venue = self.request.query_params.get('venue')
-        categories = self.request.query_params.get('categories')
-        tags = self.request.query_params.get('tags')
-        start_date = self.request.query_params.get('start_date')
-
-        if venue:
-            queryset = queryset.filter(venue__name=venue)
-
-        if categories:
-            queryset = queryset.filter(categories__icontains=categories)
-
-        if tags:
-            queryset = queryset.filter(tags__icontains=tags)
-
-        if start_date:
-            queryset = queryset.filter(start_time__date=start_date)
-
-        return queryset
-
-
 class EventDetailView(generics.RetrieveAPIView):
     queryset = Event.objects.all()
     serializer_class = EventSerializer

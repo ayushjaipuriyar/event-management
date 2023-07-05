@@ -11,11 +11,20 @@ class Event(models.Model):
     start_time = models.DateTimeField(default=None)
     end_time = models.DateTimeField(default=None)
     capacity = models.PositiveIntegerField(default=0)
-    categories = models.CharField(max_length=100)
+    # categories = models.CharField(max_length=100)
+    categories = models.ManyToManyField('Category', related_name='events')
     tags = models.CharField(max_length=100)
     creator = models.CharField(max_length=150, default=None)
     venue = models.ForeignKey(
         Venue, on_delete=models.CASCADE, to_field='name', default=None)
+
+
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+
+    
+    def __str__(self):
+        return self.name
 
 
 class Registration(models.Model):
